@@ -207,10 +207,63 @@ const Canvas = forwardRef(({ tool, shape, color, brushSize, onStroke }, ref) => 
     };
   }, [color, brushSize]);
 
+  const floodFill = useCallback((canvas, startX, startY, fillColor) => {
+    const ctx = canvas.getContext('2d');
+    const { width, height } = canvas;
+    const imageData = ctx.getImageData(0, 0, width, height);
+    const data = imageData.data;
+
+    // Parse fill color hex → rgba
+    const tmp = document.createElement('canvas');
+    tmp.width = tmp.height = 1;
+    const tc = tmp.getContext('2d');
+    tc.fillStyle = fillColor;
+    tc.fillRect(0, 0, 1, 1);
+    const [fr, fg, fb, fa] = tc.getImageData(0, 0, 1, 1).data;
+
+    const idx = (x, y) => (y * width + x) * 4;
+    const si = idx(Math.floor(startX), Math.floor(startY));
+    const [sr, sg, sb, sa] = [data[si], data[si+1], data[si+2], data[si+3]];
+
+    // Don't fill if clicking the same color
+    if (sr === fr && sg === fg && sb === fb && sa === fa) return;
+
+    const tolerance = 32;
+    const match = (i) =>
+      Math.abs(data[i] - sr) <= tolerance &&
+      Math.abs(data[i+1] - sg) <= tolerance &&
+      Math.abs(data[i+2] - sb) <= tolerance &&
+      Math.abs(data[i+3] - sa) <= tolerance;
+
+    const stack = [[Math.floor(startX), Math.floor(startY)]];
+    const visited = new Uint8Array(width * height);
+
+    while (stack.length) {
+      const [x, y] = stack.pop();
+      if (x < 0 || x >= width || y < 0 || y >= height) continue;
+      const vi = y * width + x;
+      if (visited[vi]) continue;
+      visited[vi] = 1;
+      const i = vi * 4;
+      if (!match(i)) continue;
+      data[i] = fr; data[i+1] = fg; data[i+2] = fb; data[i+3] = fa;
+      stack.push([x+1, y], [x-1, y], [x, y+1], [x, y-1]);
+    }
+
+    ctx.putImageData(imageData, 0, 0);
+    saveHistory();
+    onStroke && onStroke();
+  }, [saveHistory, onStroke]);
+
   const startDraw = (e) => {
     e.preventDefault();
     const canvas = canvasRef.current;
     const pos = getPos(e, canvas);
+
+    if (tool === 'fill') {
+      floodFill(canvas, pos.x, pos.y, color);
+      return;
+    }
 
     // Curve phase 2: clicking commits the curve
     if (tool === 'curve' && curvePhase.current === 2) {
@@ -376,7 +429,7 @@ const Canvas = forwardRef(({ tool, shape, color, brushSize, onStroke }, ref) => 
 
   const getCursor = () => {
     if (tool === 'eraser') return 'cell';
-    if (tool === 'line') return 'crosshair';
+    if (tool === 'fill') return 'copy';
     return 'crosshair';
   };
 

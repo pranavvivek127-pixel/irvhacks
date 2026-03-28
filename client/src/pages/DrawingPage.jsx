@@ -204,6 +204,7 @@ const analyzeDrawing = useCallback(async () => {
       if (e.key === 'p') setTool('pen');
       if (e.key === 'l') setTool('line');
       if (e.key === 'c') setTool('curve');
+      if (e.key === 'f') setTool('fill');
       if (e.key === 'e') setTool('eraser');
     };
     window.addEventListener('keydown', handleKey);

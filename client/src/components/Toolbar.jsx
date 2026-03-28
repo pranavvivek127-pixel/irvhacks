@@ -71,6 +71,12 @@ export default function Toolbar({ tool, setTool, shape, setShape, color, setColo
         </div>
 
         <button
+          className={`tool-btn-labeled ${tool === 'fill' ? 'active' : ''}`}
+          onClick={() => setTool('fill')}
+        >
+          <FillIcon /> Fill
+        </button>
+        <button
           className={`tool-btn-labeled ${tool === 'eraser' ? 'active eraser' : ''}`}
           onClick={() => setTool('eraser')}
         >
@@ -143,6 +149,12 @@ export default function Toolbar({ tool, setTool, shape, setShape, color, setColo
 const PenIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/>
+  </svg>
+);
+
+const FillIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M19 11L8.93 1.93a1 1 0 00-1.41 0L3.1 6.34a1 1 0 000 1.41L13 18"/><path d="M19 11l2.5 2.5a2 2 0 010 2.83L20 17.8a2 2 0 01-2.83 0L14 14.63"/><line x1="3" y1="21" x2="21" y2="21"/>
   </svg>
 );
 
