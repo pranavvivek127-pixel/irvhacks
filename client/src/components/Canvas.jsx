@@ -5,6 +5,8 @@ const Canvas = forwardRef(({ tool, color, brushSize, onStroke }, ref) => {
   const canvasRef = useRef(null);
   const isDrawing = useRef(false);
   const lastPos = useRef(null);
+  const lineStartPos = useRef(null);
+  const lineSnapshot = useRef(null);
   const history = useRef([]);
   const historyIndex = useRef(-1);
 
@@ -103,11 +105,16 @@ const Canvas = forwardRef(({ tool, color, brushSize, onStroke }, ref) => {
     const pos = getPos(e, canvas);
     lastPos.current = pos;
 
-    const ctx = canvas.getContext('2d');
-    ctx.beginPath();
-    ctx.arc(pos.x, pos.y, (tool === 'eraser' ? brushSize * 2 : brushSize) / 2, 0, Math.PI * 2);
-    ctx.fillStyle = tool === 'eraser' ? '#ffffff' : color;
-    ctx.fill();
+    if (tool === 'line') {
+      lineStartPos.current = pos;
+      lineSnapshot.current = canvas.toDataURL();
+    } else {
+      const ctx = canvas.getContext('2d');
+      ctx.beginPath();
+      ctx.arc(pos.x, pos.y, (tool === 'eraser' ? brushSize * 2 : brushSize) / 2, 0, Math.PI * 2);
+      ctx.fillStyle = tool === 'eraser' ? '#ffffff' : color;
+      ctx.fill();
+    }
   };
 
   const draw = (e) => {
@@ -117,22 +124,40 @@ const Canvas = forwardRef(({ tool, color, brushSize, onStroke }, ref) => {
     const ctx = canvas.getContext('2d');
     const pos = getPos(e, canvas);
 
-    ctx.beginPath();
-    ctx.moveTo(lastPos.current.x, lastPos.current.y);
-    ctx.lineTo(pos.x, pos.y);
-    ctx.strokeStyle = tool === 'eraser' ? '#ffffff' : color;
-    ctx.lineWidth = tool === 'eraser' ? brushSize * 2 : brushSize;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    ctx.stroke();
-
-    lastPos.current = pos;
+    if (tool === 'line') {
+      // Restore snapshot then draw preview line
+      const img = new Image();
+      img.src = lineSnapshot.current;
+      img.onload = () => {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0);
+        ctx.beginPath();
+        ctx.moveTo(lineStartPos.current.x, lineStartPos.current.y);
+        ctx.lineTo(pos.x, pos.y);
+        ctx.strokeStyle = color;
+        ctx.lineWidth = brushSize;
+        ctx.lineCap = 'round';
+        ctx.stroke();
+      };
+    } else {
+      ctx.beginPath();
+      ctx.moveTo(lastPos.current.x, lastPos.current.y);
+      ctx.lineTo(pos.x, pos.y);
+      ctx.strokeStyle = tool === 'eraser' ? '#ffffff' : color;
+      ctx.lineWidth = tool === 'eraser' ? brushSize * 2 : brushSize;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.stroke();
+      lastPos.current = pos;
+    }
   };
 
   const stopDraw = () => {
     if (isDrawing.current) {
       isDrawing.current = false;
       lastPos.current = null;
+      lineStartPos.current = null;
+      lineSnapshot.current = null;
       saveHistory();
       onStroke && onStroke();
     }
@@ -140,6 +165,7 @@ const Canvas = forwardRef(({ tool, color, brushSize, onStroke }, ref) => {
 
   const getCursor = () => {
     if (tool === 'eraser') return 'cell';
+    if (tool === 'line') return 'crosshair';
     return 'crosshair';
   };
 

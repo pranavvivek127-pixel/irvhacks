@@ -14,13 +14,19 @@ export default function Toolbar({ tool, setTool, color, setColor, brushSize, set
   return (
     <div className="toolbar">
 
-      {/* Pen & Eraser — large labeled buttons */}
+      {/* Pen, Line & Eraser — large labeled buttons */}
       <div className="toolbar-group">
         <button
           className={`tool-btn-labeled ${tool === 'pen' ? 'active' : ''}`}
           onClick={() => setTool('pen')}
         >
           <PenIcon /> Pen
+        </button>
+        <button
+          className={`tool-btn-labeled ${tool === 'line' ? 'active' : ''}`}
+          onClick={() => setTool('line')}
+        >
+          <LineIcon /> Line
         </button>
         <button
           className={`tool-btn-labeled ${tool === 'eraser' ? 'active eraser' : ''}`}
@@ -95,6 +101,12 @@ export default function Toolbar({ tool, setTool, color, setColor, brushSize, set
 const PenIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/>
+  </svg>
+);
+
+const LineIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="5" y1="19" x2="19" y2="5"/>
   </svg>
 );
 

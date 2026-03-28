@@ -168,6 +168,7 @@ const analyzeDrawing = useCallback(async () => {
         canvasRef.current?.undo();
       }
       if (e.key === 'p') setTool('pen');
+      if (e.key === 'l') setTool('line');
       if (e.key === 'e') setTool('eraser');
     };
     window.addEventListener('keydown', handleKey);
