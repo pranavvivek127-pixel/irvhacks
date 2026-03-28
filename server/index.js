@@ -22,7 +22,7 @@ app.post('/api/todos', async (req, res) => {
         role: 'user',
         content: `You are an expert art instructor. A student wants to draw: "${topic}"
 
-Generate a clear, actionable step-by-step drawing guide with exactly 6-8 steps. Each step should be a specific, observable action the artist takes on the canvas.
+Generate a clear, actionable step-by-step drawing guide. Use only as many steps as the subject actually requires — simple subjects may need 3-4 steps, complex ones up to 8. Do not pad with unnecessary steps. Each step should be a specific, observable action the artist takes on the canvas.
 
 Respond ONLY with a JSON array of steps. Each step has:
 - "id": number (1-based)
@@ -114,6 +114,7 @@ Respond ONLY with JSON:
     if (!jsonMatch) throw new Error('No JSON in response');
 
     const result = JSON.parse(jsonMatch[0]);
+    console.log('[analyze] Claude result:', JSON.stringify(result));
     res.json(result);
   } catch (err) {
     console.error('Error analyzing drawing:', err);
