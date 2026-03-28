@@ -34,8 +34,38 @@ export default function DrawingPage() {
   useEffect(() => { isAnalyzingRef.current = isAnalyzing; }, [isAnalyzing]);
   useEffect(() => { completedIdsRef.current = completedIds; }, [completedIds]);
 
-  // Auto-fill topic from suggestions page
+  // Auto-fill topic from suggestions page, or restore a saved drawing
   useEffect(() => {
+    const continueTopic = window.sessionStorage.getItem('artai_continue_topic');
+    const continueImage = window.sessionStorage.getItem('artai_continue_image');
+    if (continueTopic) {
+      window.sessionStorage.removeItem('artai_continue_topic');
+      window.sessionStorage.removeItem('artai_continue_image');
+      // Auto-submit the topic then restore the image once canvas is ready
+      const t = continueTopic;
+      setInputValue(t);
+      setTopic(t);
+      setIsLoadingTodos(true);
+      sessionIdRef.current = Date.now();
+      fetch('/api/todos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ topic: t })
+      })
+        .then(r => r.json())
+        .then(data => {
+          if (data.todos) {
+            setTodos(data.todos);
+            if (continueImage) {
+              // Wait for canvas to be visible and sized, then load the image
+              setTimeout(() => canvasRef.current?.loadImage(continueImage), 300);
+            }
+          }
+        })
+        .catch(console.error)
+        .finally(() => setIsLoadingTodos(false));
+      return;
+    }
     const pending = window.sessionStorage.getItem('artai_pending_topic');
     if (pending) {
       setInputValue(pending);
@@ -279,6 +309,7 @@ const analyzeDrawing = useCallback(async () => {
                 <TodoList
                   todos={todos}
                   completedIds={completedIds}
+                  onToggle={(id) => setCompletedIds(prev => new Set([...prev, id]))}
                   feedback={feedback}
                   isAnalyzing={isAnalyzing}
                 />

@@ -12,20 +12,45 @@ const CATEGORIES = [
   { id: 'still life', label: 'Still Life', emoji: '🍎' },
 ];
 
-async function fetchImageForTopic(title, category) {
-  try {
-    const query = encodeURIComponent(`${title} ${category} drawing sketch art`);
-    const res = await fetch(`https://lexica.art/api/v1/search?q=${query}`);
-    const data = await res.json();
-    if (data.images && data.images.length > 0) {
-      // Pick a random image from top 5 results
-      const pick = data.images[Math.floor(Math.random() * Math.min(5, data.images.length))];
-      return pick.srcSmall || pick.src;
-    }
-  } catch (err) {
-    // silently fail — no image shown
-  }
-  return null;
+const CATEGORY_IMAGES = {
+  nature: [
+    'https://upload.wikimedia.org/wikipedia/commons/thumb/7/70/A_forest_glen_with_stream_and_two_cows%29_-_F.D._Briscoe_LCCN2016649125.jpg/400px-A_forest_glen_with_stream_and_two_cows%29_-_F.D._Briscoe_LCCN2016649125.jpg',
+    'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8b/A_naturalist%27s_sketch_book_%28Plate_57%29_BHL46158016.jpg/400px-A_naturalist%27s_sketch_book_%28Plate_57%29_BHL46158016.jpg',
+    'https://upload.wikimedia.org/wikipedia/commons/thumb/e/ee/%22Mapou_Pear%22%2C_Brazil_LCCN2003663626.jpg/400px-%22Mapou_Pear%22%2C_Brazil_LCCN2003663626.jpg',
+    'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d4/%22Capivard_at_the_foot_of_a_Bananier%22_LCCN2003663628.jpg/400px-%22Capivard_at_the_foot_of_a_Bananier%22_LCCN2003663628.jpg',
+  ],
+  portrait: [
+    'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a8/%27Bob_Shepherd%27_concentration_camp_portrait_drawing_by_Brian_Stonehouse.jpg/400px-%27Bob_Shepherd%27_concentration_camp_portrait_drawing_by_Brian_Stonehouse.jpg',
+    'https://upload.wikimedia.org/wikipedia/commons/thumb/3/31/2014-08-25-SimoneWeilCroquis-byTh.Rioult.jpg/400px-2014-08-25-SimoneWeilCroquis-byTh.Rioult.jpg',
+    'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f4/Jean-Baptiste_de_Muyser.jpg/400px-Jean-Baptiste_de_Muyser.jpg',
+  ],
+  abstract: [
+    'https://upload.wikimedia.org/wikipedia/commons/thumb/0/07/Hilma_af_Klint_Svanen.jpg/400px-Hilma_af_Klint_Svanen.jpg',
+    'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8a/Robert_Delaunay_-_Rythme%2C_Joie_de_vivre.jpg/400px-Robert_Delaunay_-_Rythme%2C_Joie_de_vivre.jpg',
+    'https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/%22Afterglow%22_by_Ray_L._Burggraf%2C_2005.jpg/400px-%22Afterglow%22_by_Ray_L._Burggraf%2C_2005.jpg',
+    'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f4/%22Codes%22_Abstract_Watercolor_Painting_by_Bruce_Black_%282020%29.jpg/400px-%22Codes%22_Abstract_Watercolor_Painting_by_Bruce_Black_%282020%29.jpg',
+  ],
+  architecture: [
+    'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f2/Architectural_Drawing_of_a_Garden_MET_EG14.108.jpeg/400px-Architectural_Drawing_of_a_Garden_MET_EG14.108.jpeg',
+    'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6e/Architectural_drawing_001.png/400px-Architectural_drawing_001.png',
+    'https://upload.wikimedia.org/wikipedia/commons/thumb/d/db/Aanzichten_bouwplan.PNG/400px-Aanzichten_bouwplan.PNG',
+  ],
+  fantasy: [
+    'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2b/2013-01-31_Dragonfish-Restaurant_by-David-Revoy.jpg/400px-2013-01-31_Dragonfish-Restaurant_by-David-Revoy.jpg',
+    'https://upload.wikimedia.org/wikipedia/commons/thumb/9/92/A_dragon_-_The_Illuminated_Books_of_the_middle_ages_%281844-1849%29_-_BL.jpg/400px-A_dragon_-_The_Illuminated_Books_of_the_middle_ages_%281844-1849%29_-_BL.jpg',
+    'https://upload.wikimedia.org/wikipedia/commons/thumb/1/12/2022-10-28_Introduce-the-dragon-to-the-outside-world_by-David-Revoy.jpg/400px-2022-10-28_Introduce-the-dragon-to-the-outside-world_by-David-Revoy.jpg',
+  ],
+  'still life': [
+    'https://upload.wikimedia.org/wikipedia/commons/thumb/e/ed/%22Still_life_with_lemon_and_honey%22.jpg/400px-%22Still_life_with_lemon_and_honey%22.jpg',
+    'https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/%22Still_life_with_yellow_apple_and_honey%22.jpg/400px-%22Still_life_with_yellow_apple_and_honey%22.jpg',
+    'https://upload.wikimedia.org/wikipedia/commons/thumb/d/da/Kalf%2C_Willem_-_Still_Life_with_Ewer%2C_Vessels_and_Pomegranate_-_Google_Art_Project.jpg/400px-Kalf%2C_Willem_-_Still_Life_with_Ewer%2C_Vessels_and_Pomegranate_-_Google_Art_Project.jpg',
+    'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e5/A_still_life_of_a_bird_and_fruit.jpg/400px-A_still_life_of_a_bird_and_fruit.jpg',
+  ],
+};
+
+function getImageForSuggestion(category, index) {
+  const pool = CATEGORY_IMAGES[category] || Object.values(CATEGORY_IMAGES).flat();
+  return pool[index % pool.length];
 }
 
 export default function Suggestions() {
@@ -35,14 +60,10 @@ export default function Suggestions() {
   const [activeCategory, setActiveCategory] = useState('all');
   const navigate = useNavigate();
 
-  const loadImages = async (suggestionList) => {
-    // Fetch images in parallel for all suggestions
-    const results = await Promise.all(
-      suggestionList.map(s => fetchImageForTopic(s.title, s.category))
-    );
+  const loadImages = (suggestionList) => {
     const map = {};
     suggestionList.forEach((s, i) => {
-      if (results[i]) map[s.id || i] = results[i];
+      map[s.id || i] = getImageForSuggestion(s.category, i);
     });
     setImages(map);
   };
@@ -60,7 +81,7 @@ export default function Suggestions() {
       const data = await res.json();
       if (data.suggestions) {
         setSuggestions(data.suggestions);
-        loadImages(data.suggestions); // fetch images after suggestions load
+        loadImages(data.suggestions);
       }
     } catch (err) {
       console.error(err);

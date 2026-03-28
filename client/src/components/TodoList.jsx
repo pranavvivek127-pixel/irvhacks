@@ -1,7 +1,7 @@
 import React from 'react';
 import './TodoList.css';
 
-export default function TodoList({ todos, completedIds, feedback, isAnalyzing }) {
+export default function TodoList({ todos, completedIds, onToggle, feedback, isAnalyzing }) {
   if (!todos || todos.length === 0) return null;
 
   const completedCount = todos.filter(t => completedIds.has(t.id)).length;
@@ -33,6 +33,15 @@ export default function TodoList({ todos, completedIds, feedback, isAnalyzing })
                 <div className="todo-step-title">{todo.title}</div>
                 <div className="todo-step-desc">{todo.description}</div>
               </div>
+              {!isDone && onToggle && (
+                <button
+                  className="todo-mark-btn"
+                  onClick={() => onToggle(todo.id)}
+                  title="Mark as complete"
+                >
+                  ✓
+                </button>
+              )}
             </div>
           );
         })}

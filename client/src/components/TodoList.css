@@ -69,6 +69,26 @@
   border-color: rgba(16,185,129,0.3);
 }
 
+.todo-mark-btn {
+  flex-shrink: 0;
+  align-self: center;
+  margin-left: auto;
+  padding: 3px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent-light);
+  background: transparent;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.todo-step:hover .todo-mark-btn {
+  opacity: 1;
+}
+
 .todo-step-left {
   flex-shrink: 0;
 }

@@ -7,6 +7,7 @@ const Canvas = forwardRef(({ tool, color, brushSize, onStroke }, ref) => {
   const lastPos = useRef(null);
   const lineStartPos = useRef(null);
   const lineSnapshot = useRef(null);
+  const pendingImage = useRef(null);
   const history = useRef([]);
   const historyIndex = useRef(-1);
 
@@ -14,6 +15,22 @@ const Canvas = forwardRef(({ tool, color, brushSize, onStroke }, ref) => {
     getImageBase64: () => {
       const canvas = canvasRef.current;
       return canvas ? canvas.toDataURL('image/png') : null;
+    },
+    loadImage: (dataUrl) => {
+      const canvas = canvasRef.current;
+      if (!canvas) { pendingImage.current = dataUrl; return; }
+      if (canvas.width === 0 || canvas.height === 0) { pendingImage.current = dataUrl; return; }
+      const ctx = canvas.getContext('2d');
+      const img = new Image();
+      img.onload = () => {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        history.current = [];
+        historyIndex.current = -1;
+        history.current.push(canvas.toDataURL());
+        historyIndex.current = 0;
+      };
+      img.src = dataUrl;
     },
     clear: () => {
       const canvas = canvasRef.current;
@@ -63,6 +80,19 @@ const Canvas = forwardRef(({ tool, color, brushSize, onStroke }, ref) => {
       const img = new Image();
       img.src = savedImg;
       img.onload = () => ctx.drawImage(img, 0, 0, w, h);
+    } else if (pendingImage.current) {
+      const src = pendingImage.current;
+      pendingImage.current = null;
+      const img = new Image();
+      img.onload = () => {
+        ctx.clearRect(0, 0, w, h);
+        ctx.drawImage(img, 0, 0, w, h);
+        history.current = [];
+        historyIndex.current = -1;
+        history.current.push(canvas.toDataURL());
+        historyIndex.current = 0;
+      };
+      img.src = src;
     } else {
       history.current = [];
       historyIndex.current = -1;

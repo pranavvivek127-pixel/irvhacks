@@ -108,7 +108,11 @@ export default function PreviousDrawings() {
           <div className="preview-actions">
             <button
               className="btn btn-primary"
-              onClick={() => navigate('/')}
+              onClick={() => {
+                window.sessionStorage.setItem('artai_continue_topic', selected.topic);
+                window.sessionStorage.setItem('artai_continue_image', selected.imageBase64);
+                navigate('/');
+              }}
             >
               Continue Drawing
             </button>
