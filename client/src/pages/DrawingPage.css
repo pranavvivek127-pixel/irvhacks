@@ -15,6 +15,35 @@
   border-bottom: 1px solid var(--border);
 }
 
+.quick-suggestions {
+  flex-shrink: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px 20px;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border);
+}
+
+.suggestion-chip {
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.suggestion-chip:hover {
+  color: var(--accent-light);
+  border-color: var(--accent);
+  background: var(--bg-elevated);
+}
+
 .topic-form {
   display: flex;
   align-items: center;

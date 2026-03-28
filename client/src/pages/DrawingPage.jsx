@@ -220,6 +220,23 @@ const analyzeDrawing = useCallback(async () => {
     sessionIdRef.current = Date.now();
   };
 
+  const QUICK_SUGGESTIONS = [
+    { label: '🌸 Cherry blossom', value: 'a cherry blossom branch' },
+    { label: '🦁 Lion portrait', value: 'a lion portrait' },
+    { label: '🏔️ Mountain sunset', value: 'a mountain sunset' },
+    { label: '🐉 Dragon', value: 'a dragon' },
+    { label: '🏠 Cozy cottage', value: 'a cozy cottage' },
+    { label: '🐠 Tropical fish', value: 'a colorful tropical fish' },
+    { label: '🌊 Ocean wave', value: 'a crashing ocean wave' },
+    { label: '🦋 Butterfly', value: 'a butterfly on a flower' },
+    { label: '🚀 Rocket', value: 'a rocket launching into space' },
+    { label: '🍎 Still life', value: 'a still life with fruit and vase' },
+  ];
+
+  const pickSuggestion = (value) => {
+    setInputValue(value);
+  };
+
   return (
     <div className="drawing-page">
       {/* Topic bar */}
@@ -269,6 +286,22 @@ const analyzeDrawing = useCallback(async () => {
           </div>
         )}
       </div>
+
+      {/* Quick suggestions — only when no active session */}
+      {!isActive && (
+        <div className="quick-suggestions">
+          {QUICK_SUGGESTIONS.map(s => (
+            <button
+              key={s.value}
+              className="suggestion-chip"
+              onClick={() => pickSuggestion(s.value)}
+              type="button"
+            >
+              {s.label}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Main area */}
       <div className="drawing-layout">
