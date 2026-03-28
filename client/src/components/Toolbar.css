@@ -1,0 +1,131 @@
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  flex-wrap: wrap;
+}
+
+.toolbar-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.toolbar-divider {
+  width: 1px;
+  height: 28px;
+  background: var(--border);
+  margin: 0 4px;
+}
+
+.tool-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-muted);
+  transition: all 0.15s ease;
+}
+
+.tool-btn:hover {
+  background: var(--bg-elevated);
+  color: var(--text);
+}
+
+.tool-btn.active {
+  background: var(--accent-glow);
+  color: var(--accent-light);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+.tool-btn.danger:hover {
+  background: rgba(239,68,68,0.15);
+  color: var(--red);
+}
+
+.colors-group {
+  flex-wrap: wrap;
+  max-width: 200px;
+}
+
+.color-btn {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  position: relative;
+}
+
+.color-btn:hover {
+  transform: scale(1.2);
+}
+
+.color-btn.active {
+  box-shadow: 0 0 0 2px var(--bg-card), 0 0 0 3.5px var(--accent-light);
+  transform: scale(1.15);
+}
+
+.color-custom {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  cursor: pointer;
+  background: conic-gradient(red, yellow, lime, aqua, blue, magenta, red);
+  position: relative;
+  transition: transform 0.15s ease;
+}
+
+.color-custom:hover {
+  transform: scale(1.2);
+}
+
+.color-custom input[type="color"] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.color-custom svg {
+  color: white;
+  filter: drop-shadow(0 0 1px rgba(0,0,0,0.8));
+}
+
+.size-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  transition: all 0.15s ease;
+}
+
+.size-btn:hover {
+  background: var(--bg-elevated);
+}
+
+.size-btn.active {
+  background: var(--accent-glow);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+.size-dot {
+  border-radius: 50%;
+  display: block;
+  min-width: 4px;
+  min-height: 4px;
+  transition: all 0.15s ease;
+}
