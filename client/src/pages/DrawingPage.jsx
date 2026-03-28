@@ -73,6 +73,10 @@ export default function DrawingPage() {
       const data = await res.json();
       if (data.todos) {
         setTodos(data.todos);
+        // Trigger first analysis after 3s so user sees immediate feedback
+        setTimeout(() => {
+          if (!isAnalyzingRef.current && todosRef.current.length > 0) analyzeDrawing();
+        }, 3000);
         // Start 10-second auto-analyze interval
         clearInterval(intervalRef.current);
         intervalRef.current = setInterval(() => {
@@ -113,7 +117,7 @@ export default function DrawingPage() {
       });
       const data = await res.json();
       // Always replace the full set — this unchecks steps if content was erased
-      const completed = new Set(data.completedSteps || []);
+      const completed = new Set((data.completedSteps || []).map(Number));
       setCompletedIds(completed);
       if (data.feedback) setFeedback(data.feedback);
       setLastAnalyzed(new Date());

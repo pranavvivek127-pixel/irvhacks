@@ -50,13 +50,22 @@ const Canvas = forwardRef(({ tool, color, brushSize, onStroke }, ref) => {
     const w = canvas.offsetWidth;
     const h = canvas.offsetHeight;
     if (w === 0 || h === 0) return;
+    // Preserve existing drawing if canvas already has content
+    const hadContent = history.current.length > 0 && historyIndex.current >= 0;
+    const savedImg = hadContent ? history.current[historyIndex.current] : null;
     canvas.width = w;
     canvas.height = h;
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, w, h);
-    history.current = [];
-    historyIndex.current = -1;
-    saveHistory();
+    if (savedImg) {
+      const img = new Image();
+      img.src = savedImg;
+      img.onload = () => ctx.drawImage(img, 0, 0, w, h);
+    } else {
+      history.current = [];
+      historyIndex.current = -1;
+      saveHistory();
+    }
   }, [saveHistory]);
 
   useEffect(() => {
@@ -64,8 +73,10 @@ const Canvas = forwardRef(({ tool, color, brushSize, onStroke }, ref) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const observer = new ResizeObserver(() => {
-      if (canvas.width === 0 || canvas.height === 0) {
+    const observer = new ResizeObserver((entries) => {
+      const entry = entries[0];
+      const { width, height } = entry.contentRect;
+      if (width > 0 && height > 0) {
         initCanvas();
       }
     });
