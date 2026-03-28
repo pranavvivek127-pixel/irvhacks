@@ -185,6 +185,11 @@
   animation: pulse 2s ease infinite;
 }
 
+.pulse-dot.analyzing {
+  background: var(--accent-light);
+  animation: pulse 0.6s ease infinite;
+}
+
 .sidebar-loading {
   flex: 1;
   display: flex;

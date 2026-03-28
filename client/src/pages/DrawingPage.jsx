@@ -17,12 +17,22 @@ export default function DrawingPage() {
   const [tool, setTool] = useState('pen');
   const [color, setColor] = useState('#000000');
   const [brushSize, setBrushSize] = useState(5);
-  const [strokeCount, setStrokeCount] = useState(0);
   const [saveMsg, setSaveMsg] = useState('');
+  const [lastAnalyzed, setLastAnalyzed] = useState(null);
 
   const canvasRef = useRef(null);
-  const analyzeTimer = useRef(null);
+  const strokeDebounce = useRef(null);
+  const intervalRef = useRef(null);
+  const isAnalyzingRef = useRef(false);
+  const todosRef = useRef([]);
+  const topicRef = useRef('');
+  const sessionIdRef = useRef(Date.now());
   const navigate = useNavigate();
+
+  // Keep refs in sync so interval/callbacks always have latest values
+  useEffect(() => { todosRef.current = todos; }, [todos]);
+  useEffect(() => { topicRef.current = topic; }, [topic]);
+  useEffect(() => { isAnalyzingRef.current = isAnalyzing; }, [isAnalyzing]);
 
   // Auto-fill topic from suggestions page
   useEffect(() => {
@@ -33,19 +43,14 @@ export default function DrawingPage() {
     }
   }, []);
 
-  // Auto-analyze after 5 strokes
+  // Analyze on stroke end (debounced 2s) — catches erases too
   const handleStroke = useCallback(() => {
-    setStrokeCount(prev => {
-      const next = prev + 1;
-      if (next % 5 === 0 && todos.length > 0) {
-        clearTimeout(analyzeTimer.current);
-        analyzeTimer.current = setTimeout(() => {
-          analyzeDrawing();
-        }, 800);
-      }
-      return next;
-    });
-  }, [todos]);
+    if (!todosRef.current.length) return;
+    clearTimeout(strokeDebounce.current);
+    strokeDebounce.current = setTimeout(() => {
+      if (!isAnalyzingRef.current) analyzeDrawing();
+    }, 2000);
+  }, []);
 
   const generateTodos = async (e) => {
     e.preventDefault();
@@ -56,7 +61,8 @@ export default function DrawingPage() {
     setTodos([]);
     setCompletedIds(new Set());
     setFeedback(null);
-    setStrokeCount(0);
+    clearInterval(intervalRef.current);
+    sessionIdRef.current = Date.now();
 
     try {
       const res = await fetch('/api/todos', {
@@ -65,7 +71,16 @@ export default function DrawingPage() {
         body: JSON.stringify({ topic: t })
       });
       const data = await res.json();
-      if (data.todos) setTodos(data.todos);
+      if (data.todos) {
+        setTodos(data.todos);
+        // Start 10-second auto-analyze interval
+        clearInterval(intervalRef.current);
+        intervalRef.current = setInterval(() => {
+          if (!isAnalyzingRef.current && todosRef.current.length > 0) {
+            analyzeDrawing();
+          }
+        }, 10000);
+      }
     } catch (err) {
       console.error(err);
     } finally {
@@ -73,33 +88,64 @@ export default function DrawingPage() {
     }
   };
 
+  // Clean up interval on unmount
+  useEffect(() => {
+    return () => {
+      clearInterval(intervalRef.current);
+      clearTimeout(strokeDebounce.current);
+    };
+  }, []);
+
   const analyzeDrawing = useCallback(async () => {
-    if (!canvasRef.current || !todos.length) return;
+    const currentTodos = todosRef.current;
+    const currentTopic = topicRef.current;
+    if (!canvasRef.current || !currentTodos.length) return;
     const imageBase64 = canvasRef.current.getImageBase64();
     if (!imageBase64) return;
 
     setIsAnalyzing(true);
-    setFeedback(null);
 
     try {
       const res = await fetch('/api/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ imageBase64, todos, topic })
+        body: JSON.stringify({ imageBase64, todos: currentTodos, topic: currentTopic })
       });
       const data = await res.json();
-      if (data.completedSteps) {
-        setCompletedIds(new Set(data.completedSteps));
-      }
-      if (data.feedback) {
-        setFeedback(data.feedback);
+      // Always replace the full set — this unchecks steps if content was erased
+      const completed = new Set(data.completedSteps || []);
+      setCompletedIds(completed);
+      if (data.feedback) setFeedback(data.feedback);
+      setLastAnalyzed(new Date());
+
+      // Auto-save after every analysis so progress is never lost
+      const imageBase64 = canvasRef.current?.getImageBase64();
+      if (imageBase64) {
+        const currentTodos = todosRef.current;
+        const completedCount = currentTodos.filter(t => completed.has(t.id)).length;
+        const drawings = JSON.parse(localStorage.getItem('artai_drawings') || '[]');
+        // Update existing entry for this session or add new one
+        const existingIdx = drawings.findIndex(d => d.sessionId === sessionIdRef.current);
+        const entry = {
+          id: existingIdx >= 0 ? drawings[existingIdx].id : Date.now(),
+          sessionId: sessionIdRef.current,
+          topic: topicRef.current || 'Untitled',
+          imageBase64,
+          date: new Date().toISOString(),
+          steps: currentTodos.length,
+          completedSteps: completedCount,
+          progress: currentTodos.length > 0 ? Math.round((completedCount / currentTodos.length) * 100) : 0
+        };
+        if (existingIdx >= 0) drawings[existingIdx] = entry;
+        else drawings.unshift(entry);
+        localStorage.setItem('artai_drawings', JSON.stringify(drawings.slice(0, 50)));
       }
     } catch (err) {
       console.error(err);
     } finally {
       setIsAnalyzing(false);
     }
-  }, [todos, topic]);
+  }, []);
 
   const saveDrawing = () => {
     if (!canvasRef.current) return;
@@ -223,8 +269,8 @@ export default function DrawingPage() {
                 <h3 className="sidebar-title">{topic}</h3>
               </div>
               <div className="auto-analyze-badge">
-                <span className="pulse-dot" />
-                Auto-tracking
+                <span className={`pulse-dot ${isAnalyzing ? 'analyzing' : ''}`} />
+                {isAnalyzing ? 'Analyzing…' : lastAnalyzed ? `Checked ${lastAnalyzed.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'})}` : 'Auto-tracking'}
               </div>
             </div>
 

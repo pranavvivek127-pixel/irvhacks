@@ -43,25 +43,37 @@ const Canvas = forwardRef(({ tool, color, brushSize, onStroke }, ref) => {
     }
   }, []);
 
-  useEffect(() => {
+  const initCanvas = useCallback(() => {
     const canvas = canvasRef.current;
+    if (!canvas) return;
     const ctx = canvas.getContext('2d');
-    canvas.width = canvas.offsetWidth;
-    canvas.height = canvas.offsetHeight;
+    const w = canvas.offsetWidth;
+    const h = canvas.offsetHeight;
+    if (w === 0 || h === 0) return;
+    canvas.width = w;
+    canvas.height = h;
     ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillRect(0, 0, w, h);
+    history.current = [];
+    historyIndex.current = -1;
     saveHistory();
+  }, [saveHistory]);
 
-    const handleResize = () => {
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      canvas.width = canvas.offsetWidth;
-      canvas.height = canvas.offsetHeight;
-      ctx.putImageData(imageData, 0, 0);
-    };
+  useEffect(() => {
+    // Use ResizeObserver so canvas initializes correctly even when revealed later
+    const canvas = canvasRef.current;
+    if (!canvas) return;
 
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+    const observer = new ResizeObserver(() => {
+      if (canvas.width === 0 || canvas.height === 0) {
+        initCanvas();
+      }
+    });
+    observer.observe(canvas);
+    initCanvas();
+
+    return () => observer.disconnect();
+  }, [initCanvas]);
 
   const getPos = (e, canvas) => {
     const rect = canvas.getBoundingClientRect();

@@ -13,25 +13,38 @@ const BRUSH_SIZES = [2, 5, 10, 18, 28];
 export default function Toolbar({ tool, setTool, color, setColor, brushSize, setBrushSize, onUndo, onClear }) {
   return (
     <div className="toolbar">
+
+      {/* Pen & Eraser — large labeled buttons */}
       <div className="toolbar-group">
         <button
-          className={`tool-btn ${tool === 'pen' ? 'active' : ''}`}
+          className={`tool-btn-labeled ${tool === 'pen' ? 'active' : ''}`}
           onClick={() => setTool('pen')}
-          title="Pen (P)"
         >
-          <PenIcon />
+          <PenIcon /> Pen
         </button>
         <button
-          className={`tool-btn ${tool === 'eraser' ? 'active' : ''}`}
+          className={`tool-btn-labeled ${tool === 'eraser' ? 'active eraser' : ''}`}
           onClick={() => setTool('eraser')}
-          title="Eraser (E)"
         >
-          <EraserIcon />
+          <EraserIcon /> Eraser
         </button>
       </div>
 
       <div className="toolbar-divider" />
 
+      {/* Undo & Clear — large labeled buttons */}
+      <div className="toolbar-group">
+        <button className="tool-btn-labeled" onClick={onUndo}>
+          <UndoIcon /> Undo
+        </button>
+        <button className="tool-btn-labeled danger" onClick={onClear}>
+          <TrashIcon /> Clear
+        </button>
+      </div>
+
+      <div className="toolbar-divider" />
+
+      {/* Colors */}
       <div className="toolbar-group colors-group">
         {COLORS.map(c => (
           <button
@@ -54,6 +67,7 @@ export default function Toolbar({ tool, setTool, color, setColor, brushSize, set
 
       <div className="toolbar-divider" />
 
+      {/* Brush sizes */}
       <div className="toolbar-group">
         {BRUSH_SIZES.map(size => (
           <button
@@ -74,16 +88,6 @@ export default function Toolbar({ tool, setTool, color, setColor, brushSize, set
         ))}
       </div>
 
-      <div className="toolbar-divider" />
-
-      <div className="toolbar-group">
-        <button className="tool-btn" onClick={onUndo} title="Undo (Ctrl+Z)">
-          <UndoIcon />
-        </button>
-        <button className="tool-btn danger" onClick={onClear} title="Clear canvas">
-          <TrashIcon />
-        </button>
-      </div>
     </div>
   );
 }

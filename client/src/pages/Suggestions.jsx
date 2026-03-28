@@ -12,15 +12,45 @@ const CATEGORIES = [
   { id: 'still life', label: 'Still Life', emoji: '🍎' },
 ];
 
+async function fetchImageForTopic(title, category) {
+  try {
+    const query = encodeURIComponent(`${title} ${category} drawing sketch art`);
+    const res = await fetch(`https://lexica.art/api/v1/search?q=${query}`);
+    const data = await res.json();
+    if (data.images && data.images.length > 0) {
+      // Pick a random image from top 5 results
+      const pick = data.images[Math.floor(Math.random() * Math.min(5, data.images.length))];
+      return pick.srcSmall || pick.src;
+    }
+  } catch (err) {
+    // silently fail — no image shown
+  }
+  return null;
+}
+
 export default function Suggestions() {
   const [suggestions, setSuggestions] = useState([]);
+  const [images, setImages] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [activeCategory, setActiveCategory] = useState('all');
   const navigate = useNavigate();
 
+  const loadImages = async (suggestionList) => {
+    // Fetch images in parallel for all suggestions
+    const results = await Promise.all(
+      suggestionList.map(s => fetchImageForTopic(s.title, s.category))
+    );
+    const map = {};
+    suggestionList.forEach((s, i) => {
+      if (results[i]) map[s.id || i] = results[i];
+    });
+    setImages(map);
+  };
+
   const loadSuggestions = async (cat) => {
     setIsLoading(true);
     setSuggestions([]);
+    setImages({});
     try {
       const res = await fetch('/api/suggestions', {
         method: 'POST',
@@ -28,7 +58,10 @@ export default function Suggestions() {
         body: JSON.stringify({ category: cat === 'all' ? null : cat })
       });
       const data = await res.json();
-      if (data.suggestions) setSuggestions(data.suggestions);
+      if (data.suggestions) {
+        setSuggestions(data.suggestions);
+        loadImages(data.suggestions); // fetch images after suggestions load
+      }
     } catch (err) {
       console.error(err);
     } finally {
@@ -46,8 +79,8 @@ export default function Suggestions() {
   };
 
   const startDrawing = (suggestion) => {
-    navigate('/', { state: { topic: suggestion.title } });
     window.sessionStorage.setItem('artai_pending_topic', suggestion.title);
+    navigate('/');
   };
 
   return (
@@ -56,7 +89,7 @@ export default function Suggestions() {
         <div className="suggestions-title-row">
           <div>
             <h1 className="suggestions-title">Drawing Inspiration</h1>
-            <p className="suggestions-subtitle">Explore ideas and let AI guide your artistic journey</p>
+            <p className="suggestions-subtitle">Browse AI-curated ideas with real art references</p>
           </div>
           <button
             className="btn btn-secondary"
@@ -86,7 +119,7 @@ export default function Suggestions() {
           <div className="suggestions-loading">
             {[...Array(9)].map((_, i) => (
               <div key={i} className="suggestion-skeleton">
-                <div className="skeleton-emoji" />
+                <div className="skeleton-image" />
                 <div className="skeleton-line long" />
                 <div className="skeleton-line short" />
                 <div className="skeleton-badge" />
@@ -95,31 +128,49 @@ export default function Suggestions() {
           </div>
         ) : (
           <div className="suggestions-grid">
-            {suggestions.map((s, i) => (
-              <div
-                key={s.id || i}
-                className="suggestion-card fade-in"
-                style={{ animationDelay: `${i * 40}ms` }}
-              >
-                <div className="suggestion-card-top">
-                  <span className="suggestion-emoji">{s.emoji}</span>
-                  <span className={`badge badge-${s.difficulty}`}>{s.difficulty}</span>
+            {suggestions.map((s, i) => {
+              const imgKey = s.id || i;
+              const imgUrl = images[imgKey];
+              return (
+                <div
+                  key={imgKey}
+                  className="suggestion-card fade-in"
+                  style={{ animationDelay: `${i * 40}ms` }}
+                >
+                  {/* Reference image */}
+                  <div className="suggestion-image">
+                    {imgUrl ? (
+                      <img
+                        src={imgUrl}
+                        alt={s.title}
+                        onError={e => { e.target.parentNode.classList.add('no-image'); e.target.remove(); }}
+                      />
+                    ) : (
+                      <div className="suggestion-image-placeholder">
+                        <span>{s.emoji}</span>
+                      </div>
+                    )}
+                    <span className={`badge badge-${s.difficulty} image-badge`}>{s.difficulty}</span>
+                  </div>
+
+                  <div className="suggestion-card-body">
+                    <h3 className="suggestion-name">{s.title}</h3>
+                    <p className="suggestion-desc">{s.description}</p>
+                    <div className="suggestion-footer">
+                      <span className="suggestion-cat">
+                        {CATEGORIES.find(c => c.id === s.category)?.emoji || '🎨'} {s.category}
+                      </span>
+                      <button
+                        className="btn btn-primary suggestion-btn"
+                        onClick={() => startDrawing(s)}
+                      >
+                        Draw This
+                      </button>
+                    </div>
+                  </div>
                 </div>
-                <h3 className="suggestion-name">{s.title}</h3>
-                <p className="suggestion-desc">{s.description}</p>
-                <div className="suggestion-footer">
-                  <span className="suggestion-cat">
-                    {CATEGORIES.find(c => c.id === s.category)?.emoji || '🎨'} {s.category}
-                  </span>
-                  <button
-                    className="btn btn-primary suggestion-btn"
-                    onClick={() => startDrawing(s)}
-                  >
-                    Draw This
-                  </button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

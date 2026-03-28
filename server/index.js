@@ -82,26 +82,26 @@ app.post('/api/analyze', async (req, res) => {
           },
           {
             type: 'text',
-            text: `You are an expert art instructor analyzing a student's drawing of "${topic}".
+            text: `You are an expert art instructor doing a strict visual analysis of a student's drawing of "${topic}".
 
-Here are the drawing steps the student is working through:
+Here are the drawing steps you must evaluate:
 ${stepsText}
 
-Look at the drawing carefully and determine:
-1. Which steps appear to be COMPLETED (visibly done in the drawing)
-2. What specific areas need improvement
-3. One encouraging suggestion for what to focus on next
+IMPORTANT RULES:
+- Only mark a step as COMPLETED if you can clearly and visibly see that element in the drawing right now.
+- If something was drawn but then erased or is no longer visible, do NOT mark it complete.
+- If the canvas is mostly white/blank, completedSteps must be [].
+- Be strict — partial or unclear attempts do NOT count as complete.
+- Re-evaluate ALL steps every time — do not assume previous steps are still done.
 
-Respond ONLY with JSON in this exact format:
+Respond ONLY with JSON:
 {
-  "completedSteps": [1, 2, 3],
+  "completedSteps": [1, 2],
   "feedback": {
-    "improvements": ["specific area 1 to improve", "specific area 2 to improve"],
-    "nextFocus": "One specific encouraging thing to work on next"
+    "improvements": ["specific visible issue 1", "specific visible issue 2"],
+    "nextFocus": "One specific next action to take"
   }
-}
-
-Be generous — if a step is partially done, include it. If the canvas appears blank or nearly blank, completedSteps should be [].`
+}`
           }
         ]
       }]
