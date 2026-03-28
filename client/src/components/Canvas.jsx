@@ -262,8 +262,8 @@ const Canvas = forwardRef(({ tool, shape, color, brushSize, onStroke }, ref) => 
     const ctx = canvas.getContext('2d');
 
     if (tool === 'line') {
+      lastPos.current = pos;
       const img = new Image();
-      img.src = lineSnapshot.current;
       img.onload = () => {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.drawImage(img, 0, 0);
@@ -275,6 +275,7 @@ const Canvas = forwardRef(({ tool, shape, color, brushSize, onStroke }, ref) => 
         ctx.lineCap = 'round';
         ctx.stroke();
       };
+      img.src = lineSnapshot.current;
     } else if (tool === 'curve' || tool === 'shape') {
       // Preview while dragging
       const img = new Image();
