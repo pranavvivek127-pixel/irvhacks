@@ -14,6 +14,7 @@ export default function DrawingPage() {
   const [feedback, setFeedback] = useState(null);
   const [isLoadingTodos, setIsLoadingTodos] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [shadowPrompt, setShadowPrompt] = useState(false);
   const [tool, setTool] = useState('pen');
   const [shape, setShape] = useState('rect');
   const [color, setColor] = useState('#000000');
@@ -57,6 +58,7 @@ export default function DrawingPage() {
         .then(data => {
           if (data.todos) {
             setTodos(data.todos);
+            setShadowPrompt(true);
             if (continueImage) {
               // Wait for canvas to be visible and sized, then load the image
               setTimeout(() => canvasRef.current?.loadImage(continueImage), 300);
@@ -100,6 +102,7 @@ export default function DrawingPage() {
       const data = await res.json();
       if (data.todos) {
         setTodos(data.todos);
+        setShadowPrompt(true);
       }
     } catch (err) {
       console.error(err);
@@ -216,6 +219,7 @@ const analyzeDrawing = useCallback(async () => {
     setCompletedIds(new Set());
     setFeedback(null);
     setLastAnalyzed(null);
+    setShadowPrompt(false);
     canvasRef.current?.clear();
     sessionIdRef.current = Date.now();
   };
@@ -237,8 +241,34 @@ const analyzeDrawing = useCallback(async () => {
     setInputValue(value);
   };
 
+  const shadowStep = todos.find(t => t.isShadowStep);
+
+  const handleShadowNo = () => {
+    if (shadowStep) setCompletedIds(prev => new Set([...prev, shadowStep.id]));
+    setShadowPrompt(false);
+  };
+
   return (
     <div className="drawing-page">
+      {/* Shadow 3D prompt modal */}
+      {shadowPrompt && isActive && (
+        <div className="shadow-modal-overlay">
+          <div className="shadow-modal">
+            <div className="shadow-modal-icon">🌑</div>
+            <h3>Add shadows for a 3D effect?</h3>
+            <p>The last step will guide you through shading to make your drawing look three-dimensional.</p>
+            <div className="shadow-modal-actions">
+              <button className="btn btn-primary" onClick={() => setShadowPrompt(false)}>
+                Yes, I'll shade it
+              </button>
+              <button className="btn btn-secondary" onClick={handleShadowNo}>
+                No thanks — mark done
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Topic bar */}
       <div className="topic-bar">
         <form className="topic-form" onSubmit={generateTodos}>

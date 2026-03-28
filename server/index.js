@@ -54,6 +54,18 @@ Topic: "${topic}"`
     if (!jsonMatch) throw new Error('No JSON array in response');
 
     const todos = JSON.parse(jsonMatch[0]);
+
+    // Always append a shadow step as the final step
+    const shadowId = todos.length + 1;
+    todos.push({
+      id: shadowId,
+      title: 'Add shadows & depth',
+      description: 'Add shadows to give your drawing a 3D feel. Identify your light source and shade the opposite sides of each element.',
+      color: 'dark gray #555555',
+      checkHint: 'Shadow shading or dark areas visible indicating depth and 3D effect',
+      isShadowStep: true
+    });
+
     res.json({ todos });
   } catch (err) {
     console.error('Error generating todos:', err);
