@@ -103,9 +103,17 @@ export default function DrawingPage() {
   const analyzeDrawing = useCallback(async () => {
     const currentTodos = todosRef.current;
     const currentTopic = topicRef.current;
-    if (!canvasRef.current || !currentTodos.length) return;
+    console.log('[analyze] called — todos:', currentTodos.length, 'topic:', currentTopic);
+    if (!canvasRef.current || !currentTodos.length) {
+      console.log('[analyze] skipped — no canvas or no todos');
+      return;
+    }
     const imageBase64 = canvasRef.current.getImageBase64();
-    if (!imageBase64) return;
+    if (!imageBase64) {
+      console.log('[analyze] skipped — no image');
+      return;
+    }
+    console.log('[analyze] sending image, length:', imageBase64.length);
 
     setIsAnalyzing(true);
 
@@ -116,15 +124,19 @@ export default function DrawingPage() {
         body: JSON.stringify({ imageBase64, todos: currentTodos, topic: currentTopic })
       });
       const data = await res.json();
+      console.log('[analyze] API response:', data);
+      console.log('[analyze] completedSteps raw:', data.completedSteps);
+      console.log('[analyze] todos ids:', todosRef.current.map(t => t.id));
       // Always replace the full set — this unchecks steps if content was erased
       const completed = new Set((data.completedSteps || []).map(Number));
+      console.log('[analyze] completed Set:', [...completed]);
       setCompletedIds(completed);
       if (data.feedback) setFeedback(data.feedback);
       setLastAnalyzed(new Date());
 
       // Auto-save after every analysis so progress is never lost
-      const imageBase64 = canvasRef.current?.getImageBase64();
-      if (imageBase64) {
+      const saveImage = canvasRef.current?.getImageBase64();
+      if (saveImage) {
         const currentTodos = todosRef.current;
         const completedCount = currentTodos.filter(t => completed.has(t.id)).length;
         const drawings = JSON.parse(localStorage.getItem('artai_drawings') || '[]');
@@ -134,7 +146,7 @@ export default function DrawingPage() {
           id: existingIdx >= 0 ? drawings[existingIdx].id : Date.now(),
           sessionId: sessionIdRef.current,
           topic: topicRef.current || 'Untitled',
-          imageBase64,
+          imageBase64: saveImage,
           date: new Date().toISOString(),
           steps: currentTodos.length,
           completedSteps: completedCount,
