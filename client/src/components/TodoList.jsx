@@ -2,6 +2,10 @@ import React from 'react';
 import './TodoList.css';
 
 export default function TodoList({ todos, completedIds, onToggle, feedback, isAnalyzing }) {
+  const [feedbackDismissed, setFeedbackDismissed] = React.useState(false);
+
+  // Show feedback panel again when new feedback arrives
+  React.useEffect(() => { if (feedback) setFeedbackDismissed(false); }, [feedback]);
   if (!todos || todos.length === 0) return null;
 
   const completedCount = todos.filter(t => completedIds.has(t.id)).length;
@@ -63,12 +67,13 @@ export default function TodoList({ todos, completedIds, onToggle, feedback, isAn
         </div>
       )}
 
-      {feedback && !isAnalyzing && (
+      {feedback && !isAnalyzing && !feedbackDismissed && (
         <div className="feedback-panel fade-in">
           {feedback.improvements && feedback.improvements.length > 0 && (
             <div className="feedback-section">
               <div className="feedback-label">
                 <span>🔍</span> Areas to refine
+                <button className="feedback-close" onClick={() => setFeedbackDismissed(true)} title="Dismiss">✕</button>
               </div>
               <ul className="feedback-list">
                 {feedback.improvements.map((item, i) => (

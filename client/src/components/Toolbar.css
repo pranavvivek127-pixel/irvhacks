@@ -60,6 +60,47 @@
   color: var(--red);
 }
 
+.shape-picker-wrap {
+  position: relative;
+}
+
+.shape-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow);
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  min-width: 110px;
+  overflow: hidden;
+}
+
+.shape-option {
+  padding: 7px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+  background: transparent;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.shape-option:hover {
+  background: var(--bg-elevated);
+  color: var(--text);
+}
+
+.shape-option.active {
+  color: var(--accent-light);
+  background: var(--bg-elevated);
+}
+
 .tool-btn {
   display: flex;
   align-items: center;

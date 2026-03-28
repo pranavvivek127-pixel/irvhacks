@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState, useCallback, forwardRef, useImperativeHandle } from 'react';
 import './Canvas.css';
 
-const Canvas = forwardRef(({ tool, color, brushSize, onStroke }, ref) => {
+const Canvas = forwardRef(({ tool, shape, color, brushSize, onStroke }, ref) => {
   const canvasRef = useRef(null);
   const isDrawing = useRef(false);
   const lastPos = useRef(null);
@@ -130,6 +130,61 @@ const Canvas = forwardRef(({ tool, color, brushSize, onStroke }, ref) => {
     };
   };
 
+  const drawShape = useCallback((ctx, shapeType, x1, y1, x2, y2) => {
+    const dx = x2 - x1, dy = y2 - y1;
+    ctx.beginPath();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = brushSize;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    switch (shapeType) {
+      case 'rect':
+        ctx.strokeRect(x1, y1, dx, dy);
+        break;
+      case 'square': {
+        const side = Math.min(Math.abs(dx), Math.abs(dy)) * (dx < 0 ? -1 : 1);
+        ctx.strokeRect(x1, y1, side, side * (dy < 0 ? -1 : 1));
+        break;
+      }
+      case 'circle': {
+        const r = Math.min(Math.abs(dx), Math.abs(dy)) / 2;
+        ctx.arc(x1 + r * (dx < 0 ? -1 : 1), y1 + r * (dy < 0 ? -1 : 1), r, 0, Math.PI * 2);
+        ctx.stroke();
+        break;
+      }
+      case 'ellipse': {
+        const cx = (x1 + x2) / 2, cy = (y1 + y2) / 2;
+        ctx.ellipse(cx, cy, Math.abs(dx) / 2, Math.abs(dy) / 2, 0, 0, Math.PI * 2);
+        ctx.stroke();
+        break;
+      }
+      case 'triangle': {
+        ctx.moveTo(x1 + dx / 2, y1);
+        ctx.lineTo(x2, y2);
+        ctx.lineTo(x1, y2);
+        ctx.closePath();
+        ctx.stroke();
+        break;
+      }
+      case 'star': {
+        const cx2 = (x1 + x2) / 2, cy2 = (y1 + y2) / 2;
+        const outerR = Math.min(Math.abs(dx), Math.abs(dy)) / 2;
+        const innerR = outerR * 0.4;
+        for (let i = 0; i < 10; i++) {
+          const angle = (Math.PI / 5) * i - Math.PI / 2;
+          const r2 = i % 2 === 0 ? outerR : innerR;
+          if (i === 0) ctx.moveTo(cx2 + r2 * Math.cos(angle), cy2 + r2 * Math.sin(angle));
+          else ctx.lineTo(cx2 + r2 * Math.cos(angle), cy2 + r2 * Math.sin(angle));
+        }
+        ctx.closePath();
+        ctx.stroke();
+        break;
+      }
+      default:
+        ctx.strokeRect(x1, y1, dx, dy);
+    }
+  }, [color, brushSize]);
+
   const drawCurvePreview = useCallback((canvas, ctrl) => {
     const ctx = canvas.getContext('2d');
     const img = new Image();
@@ -166,7 +221,7 @@ const Canvas = forwardRef(({ tool, color, brushSize, onStroke }, ref) => {
     isDrawing.current = true;
     lastPos.current = pos;
 
-    if (tool === 'line' || tool === 'curve') {
+    if (tool === 'line' || tool === 'curve' || tool === 'shape') {
       lineStartPos.current = pos;
       lineSnapshot.current = canvas.toDataURL();
       if (tool === 'curve') curvePhase.current = 1;
@@ -207,22 +262,26 @@ const Canvas = forwardRef(({ tool, color, brushSize, onStroke }, ref) => {
         ctx.lineCap = 'round';
         ctx.stroke();
       };
-    } else if (tool === 'curve') {
-      // Phase 1: preview straight line while dragging to set end point
+    } else if (tool === 'curve' || tool === 'shape') {
+      // Preview while dragging
       const img = new Image();
       img.src = lineSnapshot.current;
       img.onload = () => {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.drawImage(img, 0, 0);
-        ctx.beginPath();
-        ctx.moveTo(lineStartPos.current.x, lineStartPos.current.y);
-        ctx.lineTo(pos.x, pos.y);
-        ctx.strokeStyle = color;
-        ctx.lineWidth = brushSize;
-        ctx.lineCap = 'round';
-        ctx.setLineDash([6, 4]);
-        ctx.stroke();
-        ctx.setLineDash([]);
+        if (tool === 'shape') {
+          drawShape(ctx, shape, lineStartPos.current.x, lineStartPos.current.y, pos.x, pos.y);
+        } else {
+          ctx.beginPath();
+          ctx.moveTo(lineStartPos.current.x, lineStartPos.current.y);
+          ctx.lineTo(pos.x, pos.y);
+          ctx.strokeStyle = color;
+          ctx.lineWidth = brushSize;
+          ctx.lineCap = 'round';
+          ctx.setLineDash([6, 4]);
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
       };
       lastPos.current = pos;
     } else {
@@ -239,6 +298,15 @@ const Canvas = forwardRef(({ tool, color, brushSize, onStroke }, ref) => {
   };
 
   const stopDraw = (e) => {
+    if (tool === 'shape' && isDrawing.current) {
+      // Commit shape on mouse up
+      isDrawing.current = false;
+      lineStartPos.current = null;
+      lineSnapshot.current = null;
+      saveHistory();
+      onStroke && onStroke();
+      return;
+    }
     if (tool === 'curve' && curvePhase.current === 1 && isDrawing.current) {
       // End of drag: fix the end point, enter bend phase
       const canvas = canvasRef.current;

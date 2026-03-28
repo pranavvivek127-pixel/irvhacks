@@ -15,6 +15,7 @@ export default function DrawingPage() {
   const [isLoadingTodos, setIsLoadingTodos] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [tool, setTool] = useState('pen');
+  const [shape, setShape] = useState('rect');
   const [color, setColor] = useState('#000000');
   const [brushSize, setBrushSize] = useState(5);
   const [saveMsg, setSaveMsg] = useState('');
@@ -271,6 +272,7 @@ const analyzeDrawing = useCallback(async () => {
           <div className={`canvas-container ${!isActive ? 'hidden' : ''}`}>
             <Toolbar
               tool={tool} setTool={setTool}
+              shape={shape} setShape={setShape}
               color={color} setColor={setColor}
               brushSize={brushSize} setBrushSize={setBrushSize}
               onUndo={() => canvasRef.current?.undo()}
@@ -279,6 +281,7 @@ const analyzeDrawing = useCallback(async () => {
             <Canvas
               ref={canvasRef}
               tool={tool}
+              shape={shape}
               color={color}
               brushSize={brushSize}
               onStroke={handleStroke}
