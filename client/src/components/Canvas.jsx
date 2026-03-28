@@ -7,6 +7,8 @@ const Canvas = forwardRef(({ tool, color, brushSize, onStroke }, ref) => {
   const lastPos = useRef(null);
   const lineStartPos = useRef(null);
   const lineSnapshot = useRef(null);
+  const curveEndPos = useRef(null);
+  const curvePhase = useRef(0); // 0=idle 1=dragging end 2=bending
   const pendingImage = useRef(null);
   const history = useRef([]);
   const historyIndex = useRef(-1);
@@ -128,16 +130,46 @@ const Canvas = forwardRef(({ tool, color, brushSize, onStroke }, ref) => {
     };
   };
 
+  const drawCurvePreview = useCallback((canvas, ctrl) => {
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+    img.src = lineSnapshot.current;
+    img.onload = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0);
+      ctx.beginPath();
+      ctx.moveTo(lineStartPos.current.x, lineStartPos.current.y);
+      ctx.quadraticCurveTo(ctrl.x, ctrl.y, curveEndPos.current.x, curveEndPos.current.y);
+      ctx.strokeStyle = color;
+      ctx.lineWidth = brushSize;
+      ctx.lineCap = 'round';
+      ctx.stroke();
+    };
+  }, [color, brushSize]);
+
   const startDraw = (e) => {
     e.preventDefault();
-    isDrawing.current = true;
     const canvas = canvasRef.current;
     const pos = getPos(e, canvas);
+
+    // Curve phase 2: clicking commits the curve
+    if (tool === 'curve' && curvePhase.current === 2) {
+      curvePhase.current = 0;
+      curveEndPos.current = null;
+      lineStartPos.current = null;
+      lineSnapshot.current = null;
+      saveHistory();
+      onStroke && onStroke();
+      return;
+    }
+
+    isDrawing.current = true;
     lastPos.current = pos;
 
-    if (tool === 'line') {
+    if (tool === 'line' || tool === 'curve') {
       lineStartPos.current = pos;
       lineSnapshot.current = canvas.toDataURL();
+      if (tool === 'curve') curvePhase.current = 1;
     } else {
       const ctx = canvas.getContext('2d');
       ctx.beginPath();
@@ -149,13 +181,19 @@ const Canvas = forwardRef(({ tool, color, brushSize, onStroke }, ref) => {
 
   const draw = (e) => {
     e.preventDefault();
-    if (!isDrawing.current) return;
     const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
     const pos = getPos(e, canvas);
 
+    // Curve phase 2: mouse move bends the curve
+    if (tool === 'curve' && curvePhase.current === 2) {
+      drawCurvePreview(canvas, pos);
+      return;
+    }
+
+    if (!isDrawing.current) return;
+    const ctx = canvas.getContext('2d');
+
     if (tool === 'line') {
-      // Restore snapshot then draw preview line
       const img = new Image();
       img.src = lineSnapshot.current;
       img.onload = () => {
@@ -169,6 +207,24 @@ const Canvas = forwardRef(({ tool, color, brushSize, onStroke }, ref) => {
         ctx.lineCap = 'round';
         ctx.stroke();
       };
+    } else if (tool === 'curve') {
+      // Phase 1: preview straight line while dragging to set end point
+      const img = new Image();
+      img.src = lineSnapshot.current;
+      img.onload = () => {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0);
+        ctx.beginPath();
+        ctx.moveTo(lineStartPos.current.x, lineStartPos.current.y);
+        ctx.lineTo(pos.x, pos.y);
+        ctx.strokeStyle = color;
+        ctx.lineWidth = brushSize;
+        ctx.lineCap = 'round';
+        ctx.setLineDash([6, 4]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      };
+      lastPos.current = pos;
     } else {
       ctx.beginPath();
       ctx.moveTo(lastPos.current.x, lastPos.current.y);
@@ -182,7 +238,19 @@ const Canvas = forwardRef(({ tool, color, brushSize, onStroke }, ref) => {
     }
   };
 
-  const stopDraw = () => {
+  const stopDraw = (e) => {
+    if (tool === 'curve' && curvePhase.current === 1 && isDrawing.current) {
+      // End of drag: fix the end point, enter bend phase
+      const canvas = canvasRef.current;
+      curveEndPos.current = lastPos.current;
+      isDrawing.current = false;
+      curvePhase.current = 2;
+      // Show initial straight preview in bend phase
+      const midX = (lineStartPos.current.x + curveEndPos.current.x) / 2;
+      const midY = (lineStartPos.current.y + curveEndPos.current.y) / 2;
+      drawCurvePreview(canvas, { x: midX, y: midY });
+      return;
+    }
     if (isDrawing.current) {
       isDrawing.current = false;
       lastPos.current = null;

@@ -29,6 +29,12 @@ export default function Toolbar({ tool, setTool, color, setColor, brushSize, set
           <LineIcon /> Line
         </button>
         <button
+          className={`tool-btn-labeled ${tool === 'curve' ? 'active' : ''}`}
+          onClick={() => setTool('curve')}
+        >
+          <CurveIcon /> Curve
+        </button>
+        <button
           className={`tool-btn-labeled ${tool === 'eraser' ? 'active eraser' : ''}`}
           onClick={() => setTool('eraser')}
         >
@@ -107,6 +113,12 @@ const PenIcon = () => (
 const LineIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <line x1="5" y1="19" x2="19" y2="5"/>
+  </svg>
+);
+
+const CurveIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M4 19 Q12 4 20 19"/>
   </svg>
 );
 
