@@ -21,8 +21,6 @@ export default function DrawingPage() {
   const [lastAnalyzed, setLastAnalyzed] = useState(null);
 
   const canvasRef = useRef(null);
-  const strokeDebounce = useRef(null);
-  const intervalRef = useRef(null);
   const isAnalyzingRef = useRef(false);
   const todosRef = useRef([]);
   const topicRef = useRef('');
@@ -45,13 +43,10 @@ export default function DrawingPage() {
     }
   }, []);
 
-  // Analyze on stroke end (debounced 2s) — catches erases too
+  // Analyze immediately when the user releases the mouse/touch
   const handleStroke = useCallback(() => {
     if (!todosRef.current.length) return;
-    clearTimeout(strokeDebounce.current);
-    strokeDebounce.current = setTimeout(() => {
-      if (!isAnalyzingRef.current) analyzeDrawing();
-    }, 2000);
+    if (!isAnalyzingRef.current) analyzeDrawing();
   }, []);
 
   const generateTodos = async (e) => {
@@ -63,7 +58,6 @@ export default function DrawingPage() {
     setTodos([]);
     setCompletedIds(new Set());
     setFeedback(null);
-    clearInterval(intervalRef.current);
     sessionIdRef.current = Date.now();
 
     try {
@@ -75,17 +69,6 @@ export default function DrawingPage() {
       const data = await res.json();
       if (data.todos) {
         setTodos(data.todos);
-        // Trigger first analysis after 3s so user sees immediate feedback
-        setTimeout(() => {
-          if (!isAnalyzingRef.current && todosRef.current.length > 0) analyzeDrawing();
-        }, 3000);
-        // Start 10-second auto-analyze interval
-        clearInterval(intervalRef.current);
-        intervalRef.current = setInterval(() => {
-          if (!isAnalyzingRef.current && todosRef.current.length > 0) {
-            analyzeDrawing();
-          }
-        }, 10000);
       }
     } catch (err) {
       console.error(err);
@@ -94,15 +77,7 @@ export default function DrawingPage() {
     }
   };
 
-  // Clean up interval on unmount
-  useEffect(() => {
-    return () => {
-      clearInterval(intervalRef.current);
-      clearTimeout(strokeDebounce.current);
-    };
-  }, []);
-
-  const analyzeDrawing = useCallback(async () => {
+const analyzeDrawing = useCallback(async () => {
     const currentTodos = todosRef.current;
     const currentTopic = topicRef.current;
     console.log('[analyze] called — todos:', currentTodos.length, 'topic:', currentTopic);
