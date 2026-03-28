@@ -28,6 +28,7 @@ Respond ONLY with a JSON array of steps. Each step has:
 - "id": number (1-based)
 - "title": short step name (3-5 words)
 - "description": detailed instruction (1-2 sentences)
+- "color": the recommended color to use for this step (e.g. "black", "dark brown", "sky blue #87CEEB") — be specific
 - "checkHint": what to look for visually to know this step is done (used for AI detection)
 
 Example format:
@@ -36,6 +37,7 @@ Example format:
     "id": 1,
     "title": "Sketch basic shapes",
     "description": "Lightly sketch the main geometric shapes that form the subject using thin lines.",
+    "color": "light gray #AAAAAA",
     "checkHint": "Basic geometric shapes or outlines visible on canvas"
   }
 ]

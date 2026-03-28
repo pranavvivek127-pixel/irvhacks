@@ -32,6 +32,15 @@ export default function TodoList({ todos, completedIds, onToggle, feedback, isAn
               <div className="todo-step-body">
                 <div className="todo-step-title">{todo.title}</div>
                 <div className="todo-step-desc">{todo.description}</div>
+                {todo.color && (
+                  <div className="todo-step-color">
+                    <span
+                      className="todo-color-dot"
+                      style={{ background: todo.color.match(/#[0-9a-fA-F]{3,6}/)?.[0] || todo.color }}
+                    />
+                    <span className="todo-color-label">{todo.color}</span>
+                  </div>
+                )}
               </div>
               {!isDone && onToggle && (
                 <button

@@ -146,6 +146,27 @@
   opacity: 0.6;
 }
 
+.todo-step-color {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 4px;
+}
+
+.todo-color-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  border: 1px solid rgba(255,255,255,0.2);
+}
+
+.todo-color-label {
+  font-size: 10px;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
 .feedback-analyzing {
   display: flex;
   align-items: center;
