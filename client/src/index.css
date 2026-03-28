@@ -94,6 +94,17 @@ input, textarea {
   color: var(--accent-light);
 }
 
+.btn-danger {
+  background: var(--bg-elevated);
+  color: #f87171;
+  border: 1px solid rgba(248,113,113,0.3);
+}
+
+.btn-danger:hover {
+  background: rgba(248,113,113,0.1);
+  border-color: #f87171;
+}
+
 .btn-ghost {
   background: transparent;
   color: var(--text-muted);
