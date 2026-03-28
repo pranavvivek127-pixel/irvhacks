@@ -27,12 +27,14 @@ export default function DrawingPage() {
   const todosRef = useRef([]);
   const topicRef = useRef('');
   const sessionIdRef = useRef(Date.now());
+  const completedIdsRef = useRef(new Set());
   const navigate = useNavigate();
 
   // Keep refs in sync so interval/callbacks always have latest values
   useEffect(() => { todosRef.current = todos; }, [todos]);
   useEffect(() => { topicRef.current = topic; }, [topic]);
   useEffect(() => { isAnalyzingRef.current = isAnalyzing; }, [isAnalyzing]);
+  useEffect(() => { completedIdsRef.current = completedIds; }, [completedIds]);
 
   // Auto-fill topic from suggestions page
   useEffect(() => {
@@ -127,10 +129,10 @@ export default function DrawingPage() {
       console.log('[analyze] API response:', data);
       console.log('[analyze] completedSteps raw:', data.completedSteps);
       console.log('[analyze] todos ids:', todosRef.current.map(t => t.id));
-      // Always replace the full set — this unchecks steps if content was erased
       const completed = new Set((data.completedSteps || []).map(Number));
       console.log('[analyze] completed Set:', [...completed]);
-      setCompletedIds(completed);
+      // Merge with existing — never uncheck a step once marked done
+      setCompletedIds(prev => new Set([...prev, ...completed]));
       if (data.feedback) setFeedback(data.feedback);
       setLastAnalyzed(new Date());
 
@@ -138,7 +140,8 @@ export default function DrawingPage() {
       const saveImage = canvasRef.current?.getImageBase64();
       if (saveImage) {
         const currentTodos = todosRef.current;
-        const completedCount = currentTodos.filter(t => completed.has(t.id)).length;
+        const mergedCompleted = new Set([...completedIdsRef.current, ...completed]);
+        const completedCount = currentTodos.filter(t => mergedCompleted.has(t.id)).length;
         const drawings = JSON.parse(localStorage.getItem('artai_drawings') || '[]');
         // Update existing entry for this session or add new one
         const existingIdx = drawings.findIndex(d => d.sessionId === sessionIdRef.current);
