@@ -14,7 +14,7 @@ export default function App() {
         <div className="header-inner">
           <div className="logo">
             <span className="logo-icon">✦</span>
-            <span className="logo-text">ArtAI</span>
+            <span className="logo-text">StepCanvas</span>
           </div>
           <nav className="nav">
             <NavLink to="/" end className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
