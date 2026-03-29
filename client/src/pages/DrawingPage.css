@@ -37,7 +37,7 @@
 }
 
 .shadow-modal h3 {
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: 'Comfortaa', sans-serif;
   font-size: 18px;
   font-weight: 700;
   color: var(--text);
@@ -182,7 +182,7 @@
 }
 
 .canvas-empty-content h2 {
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: 'Comfortaa', sans-serif;
   font-size: 22px;
   font-weight: 600;
   color: var(--text);
@@ -241,7 +241,7 @@
   font-size: 15px;
   font-weight: 700;
   color: var(--text);
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: 'Comfortaa', sans-serif;
   line-height: 1.3;
 }
 

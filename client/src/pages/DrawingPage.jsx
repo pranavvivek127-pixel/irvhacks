@@ -278,7 +278,7 @@ const analyzeDrawing = useCallback(async () => {
             <input
               className="topic-input"
               type="text"
-              placeholder="What do you want to draw? (e.g. a red maple leaf, a sunset over mountains)"
+              placeholder="What would you like to draw today?"
               value={inputValue}
               onChange={e => setInputValue(e.target.value)}
             />
@@ -289,9 +289,9 @@ const analyzeDrawing = useCallback(async () => {
             disabled={isLoadingTodos || !inputValue.trim()}
           >
             {isLoadingTodos ? (
-              <><div className="loading-spinner" /> Generating…</>
+              <><div className="loading-spinner" /> Setting up…</>
             ) : (
-              <><SparkleIcon /> Get Steps</>
+              <><SparkleIcon /> Start Drawing</>
             )}
           </button>
         </form>

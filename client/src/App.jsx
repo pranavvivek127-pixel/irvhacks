@@ -24,7 +24,7 @@ export default function App() {
               <span>🖼️</span> Gallery
             </NavLink>
             <NavLink to="/suggestions" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
-              <span>✨</span> Inspire
+              <span>✨</span> Ideas
             </NavLink>
           </nav>
         </div>
